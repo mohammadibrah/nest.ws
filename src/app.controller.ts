@@ -8,7 +8,7 @@ export class AppController {
     private htm: HtmImporterService,
     private xml: XmlImporterService,
   ) {}
-  @Get()
+  @Get('hello')
   getHello(): string {
     return 'Hello World!';
   }
