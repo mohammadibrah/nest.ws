@@ -9,6 +9,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { WebsocketService } from './websocket/websocket.service';
+import { MessageService, SocketMessage } from './message/message.service';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 @WebSocketGateway({
   cors: {
@@ -19,36 +21,71 @@ import { WebsocketService } from './websocket/websocket.service';
 export class AppGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
+  private logger: Logger = new Logger('AppGateway');
+  connection: { [key: string]: WebSocketSubject<any> };
+  subject: WebSocketSubject<any>;
+
   @WebSocketServer() server: Server;
-  constructor(private ws: WebsocketService) {
-    this.ws.ws.subscribe({
-      next: (msg) => {
-        // console.log('Message from server: ' + JSON.stringify(msg));
-        const msgToSend = msg.data;
-        this.server.emit('msgToClient', msgToSend);
-        this.logger.log('Message from Remote server: ' + msgToSend);
-      },
-      error: (err) => console.log(err),
-      complete: () => console.log('complete'),
+  constructor(private msgs: MessageService) {
+    // this.subject = webSocket({
+    //   url: 'ws://192.168.1.20:9001',
+    //   // url: 'wss://demo.piesocket.com/v3/channel_1?api_key=VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self',
+    //   serializer: (msg) => msg,
+    //   deserializer: ({ data }) => data,
+    // });
+
+    // this.subject.subscribe({
+    //   next: (data) => {
+    //     this.server.emit('msgToClient', data);
+    //     this.logger.log('Message from Remote server: ' + data);
+    //   },
+    // });
+    this.connection = {
+      MT4: webSocket({
+        url: 'ws://192.168.1.20:9001',
+        // url: 'wss://demo.piesocket.com/v3/channel_1?api_key=VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self',
+        serializer: (msg) => msg,
+        deserializer: ({ data }) => data,
+      }),
+      MT5: webSocket({
+        url: 'ws://192.168.1.20:27418/mt',
+        // url: 'wss://demo.piesocket.com/v3/channel_1?api_key=VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self',
+        serializer: (msg) => msg,
+        deserializer: ({ data }) => data,
+      }),
+    };
+    Object.entries(this.connection).forEach(([key, subject]) => {
+      subject.subscribe({
+        next: (data) => {
+          this.server.emit('msgToClient', `${key} response: ${data}`);
+          this.logger.log(`Message from Remote server ${key}: ${data}`);
+        },
+      });
     });
-    this.ws.sendMessage('Hello from nest');
   }
+
   handleDisconnect(client: Socket) {
     this.logger.log('Client disconnected: ' + client.id);
   }
-  handleConnection(client: Socket, ...args: any[]) {
+  handleConnection(client: Socket) {
     this.logger.log('Client connected: ' + client.id);
   }
-  private logger: Logger = new Logger('AppGateway');
+  sendToRemoteServer(msg: string, server = 'MT4') {
+    // this.subject.next('login|nest');
+    // this.subject.next(msg);
+    this.connection[server].next('login|nest');
+    this.connection[server].next(msg);
+  }
 
   afterInit() {
     this.logger.log('Initialized!');
   }
   @SubscribeMessage('messageToServer')
-  handleMessage(client: Socket, text: string) {
-    this.logger.log('Message from client: ' + text);
-    this.ws.sendMessage(text);
-    client.emit('msgToClient', text);
-    // this.server.emit('msgToClient', text);
+  handleMessage(client: Socket, msgObj: SocketMessage) {
+    const msg = this.msgs.extractMessageContent(msgObj) + '';
+    const server = msgObj.data.server;
+    this.logger.log('Message from client: ' + msg);
+    this.sendToRemoteServer(msg, server);
+    client.emit('msgToClient', `${server} request: ${msg}`);
   }
 }
