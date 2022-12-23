@@ -14,7 +14,7 @@ import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
 
 @WebSocketGateway({
   cors: {
-    origin: '78.188.47.2:4200, 78.188.47.2',
+    origin: 'http://localhost:4200, 78.188.47.2, 78.188.47.2:4200, *',
     methods: ['GET', 'POST'],
   },
 })
