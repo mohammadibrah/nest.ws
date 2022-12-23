@@ -42,13 +42,13 @@ export class AppGateway
     // });
     this.connection = {
       MT4: webSocket({
-        url: 'ws://192.168.1.20:9001',
+        url: 'ws://78.188.47.2:9001',
         // url: 'wss://demo.piesocket.com/v3/channel_1?api_key=VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self',
         serializer: (msg) => msg,
         deserializer: ({ data }) => data,
       }),
       MT5: webSocket({
-        url: 'ws://192.168.1.20:27418/mt',
+        url: 'ws://78.188.47.2:27418/mt',
         // url: 'wss://demo.piesocket.com/v3/channel_1?api_key=VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self',
         serializer: (msg) => msg,
         deserializer: ({ data }) => data,

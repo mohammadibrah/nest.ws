@@ -9,6 +9,12 @@ import { HtmImporterService } from './htm-importer/htm-importer.service';
 @Module({
   imports: [],
   controllers: [AppController],
-  providers: [AppGateway, WebsocketService, MessageService, XmlImporterService, HtmImporterService],
+  providers: [
+    AppGateway,
+    WebsocketService,
+    MessageService,
+    XmlImporterService,
+    HtmImporterService,
+  ],
 })
 export class AppModule {}
