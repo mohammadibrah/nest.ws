@@ -8,16 +8,7 @@ import { ServerOptions } from 'socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const corsOptions = {
-    methods: ['GET', 'POST'],
-    preflightContinue: true,
-    optionsSuccessStatus: 204,
-    credentials: true,
-    origin: '*',
-  };
   app.enableCors();
-  // app.useWebSocketAdapter(new SocketAdapter(app));
-  // app.useWebSocketAdapter(new WsAdapter(app));
   await app.listen(3000);
 }
 bootstrap();
